@@ -1,4 +1,5 @@
 
+import { RigidBody } from "@react-three/rapier"
 
 export default function Court() {
     // Foot to meter
@@ -7,10 +8,12 @@ export default function Court() {
     const lineheight = 0.1
     return <>
         {/* No man's land */}
-        <mesh position-y={-0.253}>
-            <boxGeometry args={[f2m(36 + 12 * 2), 0.5, f2m(78 + 21 * 2)]} />
-            <meshStandardMaterial color='#73C8E4' />
-        </mesh>
+        <RigidBody type='fixed'>
+            <mesh position-y={-0.253}>
+                <boxGeometry args={[f2m(36 + 12 * 2), 0.5, f2m(78 + 21 * 2)]} />
+                <meshStandardMaterial color='#73C8E4' />
+            </mesh>
+        </RigidBody>
         {/* Court */}
         <mesh
             position-y={-0.001}

@@ -14,11 +14,11 @@ export default function Experience() {
     return <>
         <color args={['#252731']} attach="background" />
         <OrbitControls />
-        <Physics>
+        <Physics debug>
             <Lights />
             <Court />
             {/* <Level count={blocksCount} seed={blocksSeed} /> */}
-            {/* <Player /> */}
+            <Player />
         </Physics>
 
         {/* <Effects /> */}
