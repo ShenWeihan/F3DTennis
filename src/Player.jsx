@@ -107,11 +107,12 @@ export default function Player() {
 
         const cameraPosition = new THREE.Vector3()
         cameraPosition.copy(bodyPosition)
-        cameraPosition.z += 2.25
-        cameraPosition.y += 0.85
+        cameraPosition.z += 4.25
+        cameraPosition.y += 1
 
         const cameraTarget = new THREE.Vector3()
         cameraTarget.copy(bodyPosition)
+        cameraTarget.z -= 4
         cameraTarget.y += 0.25
 
         smoothedCameraPosition.lerp(cameraPosition, 5 * delta)
@@ -133,7 +134,7 @@ export default function Player() {
     return <RigidBody
         ref={body}
         colliders="ball"
-        restitution={0.2}
+        restitution={0.7}
         friction={1}
         linearDamping={0.5}
         angularDamping={0.5}

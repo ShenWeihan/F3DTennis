@@ -5,6 +5,7 @@ import { Level } from './Level.jsx'
 import Player from './Player.jsx'
 import Effects from './Effects.jsx'
 import Court from './Court.jsx'
+import { Perf } from 'r3f-perf'
 import { OrbitControls } from '@react-three/drei'
 
 export default function Experience() {
@@ -12,8 +13,11 @@ export default function Experience() {
     const blocksSeed = useGame(state => state.blocksSeed)
 
     return <>
+        <Perf position='top-left' />
+
         <color args={['#252731']} attach="background" />
         <OrbitControls />
+
         <Physics debug>
             <Lights />
             <Court />
