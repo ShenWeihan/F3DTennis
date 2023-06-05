@@ -16,6 +16,7 @@ export default function Player() {
     const end = useGame((state) => state.end)
     const restart = useGame((state) => state.restart)
     const blocksCount = useGame((state) => state.blocksCount)
+    const baselineZ = 13
 
     const jump = () => {
         const origin = body.current.translation()
@@ -30,7 +31,7 @@ export default function Player() {
     }
 
     const reset = () => {
-        body.current.setTranslation({ x: 0, y: 1, z: 0 })
+        body.current.setTranslation({ x: 0, y: 1, z: baselineZ })
         body.current.setLinvel({ x: 0, y: 0, z: 0 })
         body.current.setAngvel({ x: 0, y: 0, z: 0 })
     }
@@ -108,12 +109,12 @@ export default function Player() {
         const cameraPosition = new THREE.Vector3()
         cameraPosition.copy(bodyPosition)
         cameraPosition.z += 4.25
-        cameraPosition.y += 1
+        cameraPosition.y += 1.75
 
         const cameraTarget = new THREE.Vector3()
         cameraTarget.copy(bodyPosition)
-        cameraTarget.z -= 4
-        cameraTarget.y += 0.25
+        cameraTarget.z -= baselineZ
+        cameraTarget.y += 0.5
 
         smoothedCameraPosition.lerp(cameraPosition, 5 * delta)
         smoothedCameraTarget.lerp(cameraTarget, 5 * delta)
@@ -138,7 +139,7 @@ export default function Player() {
         friction={1}
         linearDamping={0.5}
         angularDamping={0.5}
-        position={[0, 2, 0]}
+        position={[0, 1, baselineZ]}
     >
         <mesh castShadow>
             <icosahedronGeometry args={[0.3, 1]} />

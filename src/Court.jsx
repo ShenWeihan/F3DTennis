@@ -1,20 +1,24 @@
 
 import { RigidBody } from "@react-three/rapier"
 import Net from "./Net"
+import { useControls } from "leva"
 
 export default function Court() {
     // Foot to meter
     const f2m = (num) => (num * 0.3048).toFixed(2)
     const linewidth = f2m(2 / 12)
-    const lineheight = 0.1
+    const { courtFriction, courtRestitution } = useControls({
+        courtFriction: 0.5,
+        courtRestitution: 1
+    })
     return <>
         <Net colider
-        rotation-y={-Math.PI / 2} scale={[0.8, 0.8, 0.8]} />
+            rotation-y={-Math.PI / 2} scale={[0.8, 0.8, 0.8]} />
         {/* No man's land */}
         <RigidBody
             type='fixed'
-            friction={1}
-            restitution={1}
+            friction={courtFriction}
+            restitution={courtRestitution}
         >
             <mesh position-y={-0.253}>
                 <boxGeometry args={[f2m(36 + 12 * 2), 0.5, f2m(78 + 21 * 2)]} />
