@@ -134,11 +134,11 @@ export default function Player() {
     return <RigidBody
         ref={body}
         colliders="ball"
-        restitution={0.7}
+        restitution={0.5}
         friction={1}
         linearDamping={0.5}
         angularDamping={0.5}
-        position={[0, 1, 0]}
+        position={[0, 2, 0]}
     >
         <mesh castShadow>
             <icosahedronGeometry args={[0.3, 1]} />
