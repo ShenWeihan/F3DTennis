@@ -1,17 +1,43 @@
-
 import { RigidBody } from "@react-three/rapier"
 import Net from "./Net"
 import { useControls } from "leva"
+
+import { shaderMaterial } from "@react-three/drei"
+import courtVertexShader from './shaders/courtVertexShader.glsl'
+import courtFragmentShader from './shaders/courtFragmentShader.glsl'
+import { Color } from "three"
+import { extend } from "@react-three/fiber"
+const CourtMaterial = shaderMaterial(
+    {
+        innerColor: new Color("#73C8E4"),
+        outterColor: new Color("#5F7795"),
+    },
+    courtVertexShader,
+    courtFragmentShader
+)
+extend({ CourtMaterial })
+
+
 
 export default function Court() {
     // Foot to meter
     const f2m = (num) => (num * 0.3048).toFixed(2)
     const linewidth = f2m(2 / 12)
-    const { courtFriction, courtRestitution } = useControls({
-        courtFriction: 0.5,
-        courtRestitution: 1
-    })
+    const { courtFriction,
+        courtRestitution,
+        innerColor,
+        outterColor } = useControls({
+            courtFriction: 0.25,
+            courtRestitution: 0.8,
+            innerColor: "#5F7795",
+            outterColor: "#73C8E4",
+        })
+
     return <>
+        {/* <mesh position={[0, 2, 1]}>
+            <planeGeometry args={[3, 3]} />
+            <courtMaterial innerColor={innerColor} outterColor={outterColor} />
+        </mesh> */}
         <Net colider
             rotation-y={-Math.PI / 2} scale={[0.8, 0.8, 0.8]} />
         {/* No man's land */}
@@ -22,7 +48,7 @@ export default function Court() {
         >
             <mesh position-y={-0.253}>
                 <boxGeometry args={[f2m(36 + 12 * 2), 0.5, f2m(78 + 21 * 2)]} />
-                <meshStandardMaterial color='#73C8E4' />
+                <meshStandardMaterial color={outterColor} />
             </mesh>
         </RigidBody>
         {/* Court */}
@@ -31,7 +57,7 @@ export default function Court() {
             rotation-x={-Math.PI / 2}
         >
             <planeGeometry args={[f2m(36), f2m(78)]} />
-            <meshStandardMaterial color='#5F7795' />
+            <meshStandardMaterial color={innerColor} />
         </mesh>
         {/* Side line */}
         <mesh

@@ -31,10 +31,10 @@ export default function Ball({ props }) {
         baselineZ: { value: 13, min: 0, max: 16 },
         linearDamping: { value: 0.2, min: 0, max: 1 },
         angularDamping: { value: 1, min: 0, max: 1 },
-        startImpulseX: { value: 0, min: 0, max: 0.01 },
-        startImpulseY: { value: 0.001, min: 0, max: 0.1 },
-        startImpulseZ: { value: 0.002, min: 0, max: 0.1 },
-        TorqueImpulse: { value: 0.2, min: -1, max: 1 },
+        startImpulseX: { value: -1e-3, min: -1e-2, max: 1e-2 },
+        startImpulseY: { value: 2.5e-3, min: -1e-2, max: 1e-2 },
+        startImpulseZ: { value: 3e-3, min: -1e-2, max: 1e-2 },
+        TorqueImpulse: { value: 1.5e-4, min: -2e-4, max: 2e-4 },
         ballDensity: { value: 0.2, min: 0.01, max: 1 },
     })
 
@@ -47,11 +47,12 @@ export default function Ball({ props }) {
 
         if (hit.toi < 0.15) {
             body.current.applyImpulse({ x: startImpulseX, y: startImpulseY, z: startImpulseZ })
-            body.current.applyTorqueImpulse({ x: TorqueImpulse, y: 0, z: 0 })
+            body.current.applyTorqueImpulse({ x: 0, y: TorqueImpulse, z: 0 })
         }
     }
 
     const reset = () => {
+        body.current.resetForces()
         body.current.setTranslation({ x: 0, y: 1, z: -baselineZ })
         body.current.setLinvel({ x: 0, y: 0, z: 0 })
         body.current.setAngvel({ x: 0, y: 0, z: 0 })
@@ -85,42 +86,25 @@ export default function Ball({ props }) {
         }
     }, [])
 
-    const linearVelocity = new THREE.Vector3()
-    const quaternion = new THREE.Quaternion()
-    const euler = new THREE.Euler()
-    const nextAngularPosition = new THREE.Vector3()
-    const angularVelocity = new THREE.Vector3()
-    const [currPosition, setCurrPosition] = useState(new THREE.Vector3(0, 0, 0))
-    const [currAngularPosition, setCurrAngularPosition] = useState(new THREE.Vector3(0, 0, 0))
-
+    function crossVectors(a, b, coeff = 1) {
+        const ax = a.x, ay = a.y, az = a.z;
+        const bx = b.x, by = b.y, bz = b.z;
+        const res = {
+            x: (ay * bz - az * by) * coeff,
+            y: (az * bx - ax * bz) * coeff,
+            z: (ax * by - ay * bx) * coeff,
+        }
+        return res
+    }
     useFrame((state, delta) => {
         /**
-         * Magnus effect
+        * Magnus effect
         */
-
-        const nextPosition = body.current.nextTranslation()
-        linearVelocity.set(nextPosition.x, nextPosition.y, nextPosition.z)
-            .sub(currPosition)
-            .multiplyScalar(1 / delta)
-        setCurrPosition(nextPosition)
-
-        const r = body.current.nextRotation()
-        quaternion.set(r.x, r.y, r.z, r.w)
-        euler.setFromQuaternion(quaternion)
-
-        nextAngularPosition.setFromEuler(euler)
-        setCurrAngularPosition(nextAngularPosition)
-
-        angularVelocity.subVectors(nextAngularPosition, currAngularPosition)
-            .multiplyScalar(1 / delta)
-
-        // Magnus effect
-        angularVelocity.cross(linearVelocity).multiplyScalar(angularDamping * 0.001)
-        const force = { x: angularVelocity.x, y: angularVelocity.y, z: angularVelocity.z }
-
+        const linvel = body.current.linvel()
+        const angvel = body.current.angvel()
+        const force = crossVectors(angvel, linvel, 1e-8)
+        body.current.addForce(force)
         console.log(force)
-
-        // body.current.addForce(force)
 
         /**
         * Phases
@@ -139,7 +123,7 @@ export default function Ball({ props }) {
         colliders={false}
         position={[0, 2, -baselineZ]}
         restitution={0.5}
-        friction={0.5}
+        friction={0.25}
         linearDamping={linearDamping}
         angularDamping={angularDamping}
         density={ballDensity}
