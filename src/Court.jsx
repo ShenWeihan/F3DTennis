@@ -28,7 +28,7 @@ export default function Court() {
         innerColor,
         outterColor } = useControls({
             courtFriction: 0.25,
-            courtRestitution: 0.8,
+            courtRestitution: 0.75,
             innerColor: "#5F7795",
             outterColor: "#73C8E4",
         })
