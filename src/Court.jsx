@@ -21,8 +21,8 @@ extend({ CourtMaterial })
 
 export default function Court() {
     // Foot to meter
-    const f2m = (num) => (num * 0.3048).toFixed(2)
-    const linewidth = f2m(2 / 12)
+    const foot2Meter = (num) => (num * 0.3048).toFixed(2)
+    const linewidth = foot2Meter(2 / 12)
     const { courtFriction,
         courtRestitution,
         innerColor,
@@ -47,7 +47,7 @@ export default function Court() {
             restitution={courtRestitution}
         >
             <mesh position-y={-0.253}>
-                <boxGeometry args={[f2m(36 + 12 * 2), 0.5, f2m(78 + 21 * 2)]} />
+                <boxGeometry args={[foot2Meter(36 + 12 * 2), 0.5, foot2Meter(78 + 21 * 2)]} />
                 <meshStandardMaterial color={outterColor} />
             </mesh>
         </RigidBody>
@@ -56,86 +56,86 @@ export default function Court() {
             position-y={-0.001}
             rotation-x={-Math.PI / 2}
         >
-            <planeGeometry args={[f2m(36), f2m(78)]} />
+            <planeGeometry args={[foot2Meter(36), foot2Meter(78)]} />
             <meshStandardMaterial color={innerColor} />
         </mesh>
         {/* Side line */}
         <mesh
-            position-x={(f2m(36) - linewidth) / 2}
+            position-x={(foot2Meter(36) - linewidth) / 2}
             rotation-x={-Math.PI / 2}
         >
-            <planeGeometry args={[linewidth, f2m(78)]} />
+            <planeGeometry args={[linewidth, foot2Meter(78)]} />
             <meshStandardMaterial color='#ffffff' />
         </mesh>
         <mesh
-            position-x={-(f2m(36) - linewidth) / 2}
+            position-x={-(foot2Meter(36) - linewidth) / 2}
             rotation-x={-Math.PI / 2}
         >
-            <planeGeometry args={[linewidth, f2m(78)]} />
+            <planeGeometry args={[linewidth, foot2Meter(78)]} />
             <meshStandardMaterial color='#ffffff' />
         </mesh>
         {/* Alley line */}
         <mesh
-            position-x={(f2m(36 - 9) - linewidth) / 2}
+            position-x={(foot2Meter(36 - 9) - linewidth) / 2}
             rotation-x={-Math.PI / 2}
         >
-            <planeGeometry args={[linewidth, f2m(78)]} />
+            <planeGeometry args={[linewidth, foot2Meter(78)]} />
             <meshStandardMaterial color='#ffffff' />
         </mesh>
         <mesh
-            position-x={-(f2m(36 - 9) - linewidth) / 2}
+            position-x={-(foot2Meter(36 - 9) - linewidth) / 2}
             rotation-x={-Math.PI / 2}
         >
-            <planeGeometry args={[linewidth, f2m(78)]} />
+            <planeGeometry args={[linewidth, foot2Meter(78)]} />
             <meshStandardMaterial color='#ffffff' />
         </mesh>
         {/* Baseline */}
         <mesh
-            position-z={(f2m(78) - 2 * linewidth) / 2}
+            position-z={(foot2Meter(78) - 2 * linewidth) / 2}
             rotation-x={-Math.PI / 2}
         >
-            <planeGeometry args={[f2m(36), 2 * linewidth]} />
+            <planeGeometry args={[foot2Meter(36), 2 * linewidth]} />
             <meshStandardMaterial color='#ffffff' />
         </mesh>
         <mesh
-            position-z={-(f2m(78) - 2 * linewidth) / 2}
+            position-z={-(foot2Meter(78) - 2 * linewidth) / 2}
             rotation-x={-Math.PI / 2}
         >
-            <planeGeometry args={[f2m(36), 2 * linewidth]} />
+            <planeGeometry args={[foot2Meter(36), 2 * linewidth]} />
             <meshStandardMaterial color='#ffffff' />
         </mesh>
         {/* Service line */}
         <mesh
-            position-z={(f2m(78 - 18 * 2) - linewidth) / 2}
+            position-z={(foot2Meter(78 - 18 * 2) - linewidth) / 2}
             rotation-x={-Math.PI / 2}
         >
-            <planeGeometry args={[f2m(27), linewidth]} />
+            <planeGeometry args={[foot2Meter(27), linewidth]} />
             <meshStandardMaterial color='#ffffff' />
         </mesh>
         <mesh
-            position-z={-(f2m(78 - 18 * 2) - linewidth) / 2}
+            position-z={-(foot2Meter(78 - 18 * 2) - linewidth) / 2}
             rotation-x={-Math.PI / 2}
         >
-            <planeGeometry args={[f2m(27), linewidth]} />
+            <planeGeometry args={[foot2Meter(27), linewidth]} />
             <meshStandardMaterial color='#ffffff' />
         </mesh>
         {/* Center service line */}
         <mesh
             rotation-x={-Math.PI / 2}
         >
-            <planeGeometry args={[linewidth, f2m(78 - 18 - 18)]} />
+            <planeGeometry args={[linewidth, foot2Meter(78 - 18 - 18)]} />
             <meshStandardMaterial color='#ffffff' />
         </mesh>
         {/* Center mark */}
         <mesh
-            position-z={(f2m(78) - 6 * linewidth) / 2}
+            position-z={(foot2Meter(78) - 6 * linewidth) / 2}
             rotation-x={-Math.PI / 2}
         >
             <planeGeometry args={[linewidth, 2 * linewidth]} />
             <meshStandardMaterial color='#ffffff' />
         </mesh>
         <mesh
-            position-z={-(f2m(78) - 6 * linewidth) / 2}
+            position-z={-(foot2Meter(78) - 6 * linewidth) / 2}
             rotation-x={-Math.PI / 2}
         >
             <planeGeometry args={[linewidth, 2 * linewidth]} />

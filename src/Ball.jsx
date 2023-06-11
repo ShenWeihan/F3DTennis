@@ -1,14 +1,10 @@
 import { useRef, useEffect } from "react"
-import { useFrame } from '@react-three/fiber'
 import { Trail, useGLTF, useKeyboardControls } from "@react-three/drei"
-import { useRapier, MeshCollider, RigidBody } from "@react-three/rapier"
+import { useRapier, BallCollider, RigidBody, useBeforePhysicsStep } from "@react-three/rapier"
 import useGame from './stores/useGame.jsx'
 import { useControls } from "leva"
 
 export default function Ball({ props, magnus = true }) {
-
-
-
     const { nodes, materials } = useGLTF("/tennisball.glb")
     const body = useRef()
 
@@ -20,58 +16,56 @@ export default function Ball({ props, magnus = true }) {
     const end = useGame((state) => state.end)
     const restart = useGame((state) => state.restart)
 
-
-    const { baselineZ,
+    const {
+        baselineZ,
         linearDamping,
         angularDamping,
         serveMPHX,
         serveMPHY,
         serveMPHZ,
         serveRPM,
-        ballDensity,
     } = useControls({
         baselineZ: { value: 13, min: 0, max: 16 },
         linearDamping: { value: 0.5, min: 0, max: 10 },
-        angularDamping: { value: 1, min: 0, max: 10 },
+        angularDamping: { value: 0.5, min: 0, max: 10 },
         serveMPHX: { value: -2, min: -5, max: 5 },
-        serveMPHY: { value: 18, min: 0, max: 30 },
-        serveMPHZ: { value: 50, min: -140, max: 140 },
-        serveRPM: { value: 1000, min: -2000, max: 2000 },
-        ballDensity: { value: 0.2, min: 0.01, max: 1 },
+        serveMPHY: { value: 10, min: 0, max: 30 },
+        serveMPHZ: { value: 60, min: -140, max: 140 },
+        serveRPM: { value: 1800, min: -2000, max: 2000 },
     })
-    const rpm2Rads = (v) => v * 0.1047198
+    const rpm2Rads = (v) => v * 2 * Math.PI / 60
     const mph2ms = (v) => v * 0.44704
     /**
- * Real constants
- */
+     * Real constants
+     */
     const mass = 0.058
-    const diameter = 0.066
-    const contactDuration = 5e-3
+    const diameter = 0.067
     const restitution = 0.75
-    const airCoeff = 5e-8
+    const Cd = 2 / 3 * 1.2 * Math.pow(diameter / 2, 3)
+
     const serve = () => {
         const origin = body.current.translation()
         origin.y -= 0.31
         const direction = { x: 0, y: - 1, z: 0 }
         const ray = new rapier.Ray(origin, direction)
         const hit = rapierWorld.castRay(ray, 10, true)
-
-        if (hit?.toi < 0.15)
-            body.current.applyImpulse({
-                x: mph2ms(serveMPHX) * mass * contactDuration,
-                y: mph2ms(serveMPHY) * mass * contactDuration,
-                z: mph2ms(serveMPHZ) * mass * contactDuration,
-            })
-        const torqueImpulst = -mass * rpm2Rads(serveRPM) * diameter / 2 * contactDuration
-        body.current.applyTorqueImpulse({
-            x: -torqueImpulst * Math.cos(Math.PI / 6),
-            y: 0,
-            z: torqueImpulst * Math.sin(Math.PI / 6),
-        })
+        if (hit?.toi < 0.15) {
+            body.current.setLinvel({
+                x: mph2ms(serveMPHX),
+                y: mph2ms(serveMPHY),
+                z: mph2ms(serveMPHZ),
+            }, true)
+            const angvel = {
+                x: -rpm2Rads(serveRPM) * Math.cos(Math.PI / 6),
+                y: rpm2Rads(serveRPM) * Math.sin(Math.PI / 6),
+                z: 0,
+            }
+            body.current.setAngvel(angvel, true)
+        }
     }
     const reset = () => {
         body.current.resetForces()
-        body.current.setTranslation({ x: 0, y: 1, z: -baselineZ })
+        body.current.setTranslation({ x: 0, y: 0, z: -baselineZ })
         body.current.setLinvel({ x: 0, y: 0, z: 0 })
         body.current.setAngvel({ x: 0, y: 0, z: 0 })
     }
@@ -114,63 +108,54 @@ export default function Ball({ props, magnus = true }) {
         }
         return res
     }
-    useFrame((state, delta) => {
+    useBeforePhysicsStep(() => {
         /**
         * Magnus effect
         */
         if (magnus) {
             const linvel = body.current.linvel()
             const angvel = body.current.angvel()
-            const force = crossVectors(angvel, linvel, airCoeff)
+            const force = crossVectors(angvel, linvel, Cd)
             body.current.resetForces(true)
             body.current.addForce(force)
         }
-
-        /**
-        * Phases
-        */
-        const bodyPosition = body.current.translation()
-        if (bodyPosition.y < - 2)
-            restart()
     })
 
-    return (<RigidBody
-        ref={body}
-        ccd
-        colliders={false}
-        position={[0, 2, -baselineZ]}
-        restitution={restitution}
-        friction={0.25}
-        linearDamping={linearDamping}
-        angularDamping={angularDamping}
-        density={ballDensity}
-        mass={mass}
+    const centerOfMass = { x: 0, y: 0, z: 0 }
+    const angine = 2 / 3 * mass * Math.pow(diameter / 2, 2)
+    const principalAngularInertia = { x: angine, y: angine, z: angine }
+    const angularInertiaLocalFrame = { w: 1, x: 1, y: 1, z: 1 }
+    const massProperties = [mass, centerOfMass, principalAngularInertia, angularInertiaLocalFrame]
+    return (<Trail
+        width={0.6} // Width of the line
+        color={'hotpink'} // Color of the line
+        length={15} // Length of the line
+        decay={2} // How fast the line fades away
     >
-
-        <Trail
-            width={1} // Width of the line
-            color={'hotpink'} // Color of the line
-            length={20} // Length of the line
-            decay={1} // How fast the line fades away
-            local={false} // Wether to use the target's world or local positions
-            stride={0} // Min distance between previous and current point
-        // attenuation={(width) => width} // A function to define the width in each point along it.
+        <RigidBody
+            name='tennisball'
+            ref={body}
+            ccd
+            colliders={false}
+            position={[0, 0, -baselineZ]}
+            restitution={restitution}
+            friction={0.25}
+            linearDamping={linearDamping}
+            angularDamping={angularDamping}
+            density={mass / (4 / 3 * Math.PI * Math.pow(diameter / 2, 3))}
+        // massProperties={[mass, { x: 0, y: 0, z: 0 },]}
         >
-
-            {/* <BallCollider /> */}
+            <BallCollider args={[diameter / 2]} />
             <group {...props} dispose={null}
-                scale={diameter}
+                scale={diameter / 2}
             >
-                <MeshCollider type='ball'>
-                    <mesh
-                        castShadow
-                        receiveShadow
-                        geometry={nodes.Sphere.geometry}
-                        material={materials["Material.001"]}
-                        rotation={[Math.PI / 2, 0, 0]}
-                    />
-                </MeshCollider>
-
+                <mesh
+                    castShadow
+                    receiveShadow
+                    geometry={nodes.Sphere.geometry}
+                    material={materials["Material.001"]}
+                    rotation={[Math.PI / 2, 0, 0]}
+                />
                 <mesh
                     castShadow
                     receiveShadow
@@ -179,8 +164,8 @@ export default function Ball({ props, magnus = true }) {
                     rotation={[Math.PI / 2, 0, 0]}
                 />
             </group>
-        </Trail>
-    </RigidBody>
+        </RigidBody>
+    </Trail>
     )
 }
 

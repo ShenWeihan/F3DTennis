@@ -6,7 +6,7 @@ import Player from './Player.jsx'
 import Court from './Court.jsx'
 import Ball from './Ball.jsx'
 import { Perf } from 'r3f-perf'
-import { OrbitControls } from '@react-three/drei'
+import { Suspense } from 'react'
 
 export default function Experience() {
     const blocksCount = useGame((state) => state.blocksCount)
@@ -15,12 +15,14 @@ export default function Experience() {
     return <>
         <Perf position='top-left' />
         <color args={['#252731']} attach="background" />
-        <Physics debug >
-            <Lights />
-            <Court />
-            <Ball />
-            <Player />
-        </Physics>
+        <Suspense>
+            <Physics debug >
+                <Lights />
+                <Court />
+                <Ball />
+                <Player />
+            </Physics>
+        </Suspense>
         {/* <Effects /> */}
     </>
 }
