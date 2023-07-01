@@ -3,6 +3,7 @@ import { Trail, useGLTF, useKeyboardControls } from "@react-three/drei"
 import { useRapier, BallCollider, RigidBody, useBeforePhysicsStep } from "@react-three/rapier"
 import useGame from './stores/useGame.jsx'
 import { useControls } from "leva"
+import { useFrame } from "@react-three/fiber"
 
 export default function Ball({ props, magnus = true }) {
     const { nodes, materials } = useGLTF("/tennisball.glb")
@@ -31,7 +32,7 @@ export default function Ball({ props, magnus = true }) {
         serveMPHX: { value: -2, min: -5, max: 5 },
         serveMPHY: { value: 10, min: 0, max: 30 },
         serveMPHZ: { value: 60, min: -140, max: 140 },
-        serveRPM: { value: 1800, min: -2000, max: 2000 },
+        serveRPM: { value: 1800, min: -3000, max: 3000 },
     })
     const rpm2Rads = (v) => v * 2 * Math.PI / 60
     const mph2ms = (v) => v * 0.44704
@@ -56,8 +57,8 @@ export default function Ball({ props, magnus = true }) {
                 z: mph2ms(serveMPHZ),
             }, true)
             const angvel = {
-                x: -rpm2Rads(serveRPM) * Math.cos(Math.PI / 6),
-                y: rpm2Rads(serveRPM) * Math.sin(Math.PI / 6),
+                x: -rpm2Rads(serveRPM) * Math.cos(Math.PI / 3),
+                y: rpm2Rads(serveRPM) * Math.sin(Math.PI / 3),
                 z: 0,
             }
             body.current.setAngvel(angvel, true)
@@ -68,6 +69,13 @@ export default function Ball({ props, magnus = true }) {
         body.current.setTranslation({ x: 0, y: 0, z: -baselineZ })
         body.current.setLinvel({ x: 0, y: 0, z: 0 })
         body.current.setAngvel({ x: 0, y: 0, z: 0 })
+    }
+
+    const reload = () => {
+        body.current.setTranslation({ x: 0, y: 0.5, z: -baselineZ })
+        body.current.setLinvel({ x: 0, y: 0, z: 0 })
+        body.current.setAngvel({ x: 0, y: 0, z: 0 })
+
     }
 
     useEffect(() => {
@@ -85,6 +93,13 @@ export default function Ball({ props, magnus = true }) {
                     serve()
             }
         )
+        const unsubscribeReload = subscribeKeys(
+            (state) => state.reload,
+            (value) => {
+                if (value)
+                    reload()
+            }
+        )
         const unsubscribeAny = subscribeKeys(
             () => {
                 start()
@@ -94,6 +109,7 @@ export default function Ball({ props, magnus = true }) {
         return () => {
             unsubscribeReset()
             unsubscribeServe()
+            unsubscribeReload()
             unsubscribeAny()
         }
     }, [])
@@ -118,6 +134,12 @@ export default function Ball({ props, magnus = true }) {
             const force = crossVectors(angvel, linvel, Cd)
             body.current.resetForces(true)
             body.current.addForce(force)
+        }
+    })
+    useFrame(() => {
+        const bodyPosition = body.current.translation()
+        if (bodyPosition.y < - 1) {
+            reload()
         }
     })
 

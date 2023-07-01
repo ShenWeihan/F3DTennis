@@ -1,8 +1,8 @@
-import { useRapier, RigidBody } from '@react-three/rapier'
-import { useFrame } from '@react-three/fiber'
-import { useKeyboardControls } from '@react-three/drei'
 import { useState, useEffect, useRef } from 'react'
 import * as THREE from 'three'
+import { useFrame } from '@react-three/fiber'
+import { useKeyboardControls } from '@react-three/drei'
+import { useRapier, RigidBody, useRevoluteJoint } from '@react-three/rapier'
 import useGame from './stores/useGame.jsx'
 
 export default function Player() {
@@ -26,7 +26,7 @@ export default function Player() {
         const hit = rapierWorld.castRay(ray, 10, true)
 
         if (hit.toi < 0.15) {
-            body.current.applyImpulse({ x: 0, y: 0.5, z: 0 })
+            body.current.applyImpulse({ x: 0, y: 500, z: 0 })
         }
     }
 
@@ -36,47 +36,40 @@ export default function Player() {
         body.current.setAngvel({ x: 0, y: 0, z: 0 })
     }
 
-    useEffect(() => {
-        const unsubscribeReset = useGame.subscribe(
-            (state) => state.phase,
-            (value) => {
-                if (value === 'ready')
-                    reset()
-            }
-        )
+    const shoulder = useRef()
+    const arm = useRef()
 
-        const unsubscribeJump = subscribeKeys(
-            (state) => state.jump,
-            (value) => {
-                if (value)
-                    jump()
-            }
-        )
+    const jointShoulder = useRevoluteJoint(arm, shoulder, [
+        // Position of the joint in arm's local space
+        [-0.01, 0.25, 0],
+        // Position of the joint in shoulder's local space
+        [0.1, 0, 0],
+        // Axis of the joint, expressed in the local-space of
+        // the rigid-bodies it is attached to. Cannot be [0,0,0].
+        [1, 0, 0]
+    ])
+    // const jointB = useRevoluteJoint(racquet, arm, [
+    //     // Position of the joint in racquet's local space
+    //     [-0.5, 0, 0],
+    //     // Position of the joint in arm's local space
+    //     [0, -0.4, 0],
+    //     // Axis of the joint, expressed in the local-space of
+    //     // the rigid-bodies it is attached to. Cannot be [0,0,0].
+    //     [0, 1, 0]
+    // ])
 
-        const unsubscribeAny = subscribeKeys(
-            () => {
-                start()
-            }
-        )
-
-        return () => {
-            unsubscribeReset()
-            unsubscribeJump()
-            unsubscribeAny()
-        }
-    }, [])
 
     useFrame((state, delta) => {
         /**
          * Controls
          */
-        const { forward, backward, leftward, rightward } = getKeys()
+        const { forward, backward, leftward, rightward, forehand, topspin } = getKeys()
 
         const impulse = { x: 0, y: 0, z: 0 }
         const torque = { x: 0, y: 0, z: 0 }
 
-        const impulseStrength = 0.6 * delta
-        const torqueStrength = 0.2 * delta
+        const impulseStrength = 600 * delta
+        const torqueStrength = 200 * delta
 
         if (forward) {
             impulse.z -= impulseStrength
@@ -123,27 +116,131 @@ export default function Player() {
         state.camera.lookAt(smoothedCameraTarget)
 
         /**
+         * Racquet
+         */
+
+        const margin = 0.01 + 0.3
+        shoulder.current.setNextKinematicTranslation({
+            x: bodyPosition.x + margin,
+            y: bodyPosition.y + 0.75,
+            z: bodyPosition.z
+        })
+
+
+        if (forehand) {
+
+            arm.current.applyImpulse({ x: 0, y: 0, z: 10 })
+        }
+        if (topspin) {
+            arm.current.applyImpulse({ x: 0, y: 0, z: -5 })
+
+            // arm.current.setLinvel({ x: 0, y: 0, z: 0 })
+            // arm.current.setAngvel({ x: 0, y: 0, z: 0 })
+            // arm.current.applyImpulse({ x: 0, y: 0, z: -10 })
+        }
+        /**
         * Phases
         */
         if (bodyPosition.z < - (blocksCount * 4 + 2))
             end()
 
-        if (bodyPosition.y < - 4)
+        if (bodyPosition.y < - 1)
             restart()
     })
 
-    return <RigidBody
-        ref={body}
-        colliders="ball"
-        restitution={0.5}
-        friction={1}
-        linearDamping={0.5}
-        angularDamping={0.5}
-        position={[0, 1, baselineZ]}
-    >
-        <mesh castShadow>
-            <icosahedronGeometry args={[0.3, 1]} />
-            <meshStandardMaterial flatShading color="mediumpurple" />
-        </mesh>
-    </RigidBody>
+    useEffect(() => {
+        const unsubscribeReset = useGame.subscribe(
+            (state) => state.phase,
+            (value) => {
+                if (value === 'ready')
+                    reset()
+            }
+        )
+
+        const unsubscribeJump = subscribeKeys(
+            (state) => state.jump,
+            (value) => {
+                if (value)
+                    jump()
+            }
+        )
+
+        const unsubscribeAny = subscribeKeys(
+            () => {
+                start()
+            }
+        )
+
+        return () => {
+            unsubscribeReset()
+            unsubscribeJump()
+            unsubscribeAny()
+        }
+    }, [])
+
+    return <>
+        <RigidBody
+            ref={body}
+            colliders="ball"
+            restitution={0.5}
+            friction={1}
+            linearDamping={0.5}
+            angularDamping={0.5}
+            position={[0, 1, baselineZ]}
+            density={997}
+        >
+            <mesh castShadow>
+                <icosahedronGeometry args={[0.3, 1]} />
+                <meshStandardMaterial flatShading color="mediumpurple" />
+            </mesh>
+        </RigidBody>
+        <RigidBody
+            type='kinematicPosition'
+            ref={shoulder}
+            restitution={0.7}
+            friction={1}
+            linearDamping={0.5}
+            angularDamping={0.5}
+            density={997}
+        >
+            <mesh >
+                <boxGeometry args={[0.1, 0.4, 0.1]} />
+                <meshBasicMaterial flatShading color="yellow" />
+            </mesh>
+            <mesh
+                position={[0.1, 0.2, 0]}
+            >
+                <boxGeometry args={[0.5, 0.1, 0.5]} />
+                <meshBasicMaterial flatShading color="yellow" />
+            </mesh>
+        </RigidBody>
+        <RigidBody
+            ref={arm}
+            position={[0.5, 0.1, -baselineZ]}
+            restitution={1}
+            friction={1}
+            linearDamping={0.5}
+            angularDamping={0.5}
+            density={997}
+        >
+            <mesh>
+                <boxGeometry args={[0.1, 0.5, 0.1]} />
+                <meshBasicMaterial flatShading color="cyan" />
+            </mesh>
+            <mesh
+                position={[0, -0.4, -0.2]}
+                rotation={[1, 0, 0]}
+            >
+                <boxGeometry args={[0.1, 0.5, 0.1]} />
+                <meshBasicMaterial flatShading color="cyan" />
+            </mesh>
+            <mesh
+                position={[0.4, -0.5, -0.5]}
+                rotation={[-0.2, 0, 0]}
+            >
+                <boxGeometry args={[0.75, 0.25, 0.04]} />
+                <meshBasicMaterial flatShading color="#b4b4b4" />
+            </mesh>
+        </RigidBody>
+    </>
 }
