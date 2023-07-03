@@ -30,9 +30,9 @@ export default function Ball({ props, magnus = true }) {
         linearDamping: { value: 0.5, min: 0, max: 10 },
         angularDamping: { value: 0.5, min: 0, max: 10 },
         serveMPHX: { value: -2, min: -5, max: 5 },
-        serveMPHY: { value: 10, min: 0, max: 30 },
+        serveMPHY: { value: 15, min: 0, max: 30 },
         serveMPHZ: { value: 60, min: -140, max: 140 },
-        serveRPM: { value: 1800, min: -3000, max: 3000 },
+        serveRPM: { value: -1800, min: -3000, max: 3000 },
     })
     const rpm2Rads = (v) => v * 2 * Math.PI / 60
     const mph2ms = (v) => v * 0.44704
@@ -57,8 +57,8 @@ export default function Ball({ props, magnus = true }) {
                 z: mph2ms(serveMPHZ),
             }, true)
             const angvel = {
-                x: -rpm2Rads(serveRPM) * Math.cos(Math.PI / 3),
-                y: rpm2Rads(serveRPM) * Math.sin(Math.PI / 3),
+                x: -rpm2Rads(serveRPM),// * Math.cos(Math.PI / 3),
+                y: 0,//rpm2Rads(serveRPM) * Math.sin(Math.PI / 3),
                 z: 0,
             }
             body.current.setAngvel(angvel, true)
@@ -149,7 +149,7 @@ export default function Ball({ props, magnus = true }) {
     const angularInertiaLocalFrame = { w: 1, x: 1, y: 1, z: 1 }
     const massProperties = [mass, centerOfMass, principalAngularInertia, angularInertiaLocalFrame]
     return (<Trail
-        width={0.6} // Width of the line
+        width={0.5} // Width of the line
         color={'hotpink'} // Color of the line
         length={15} // Length of the line
         decay={2} // How fast the line fades away

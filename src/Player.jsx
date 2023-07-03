@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import * as THREE from 'three'
 import { useFrame } from '@react-three/fiber'
-import { useKeyboardControls } from '@react-three/drei'
-import { useRapier, RigidBody, useRevoluteJoint } from '@react-three/rapier'
+import { MeshDiscardMaterial, useKeyboardControls } from '@react-three/drei'
+import { useRapier, RigidBody, useRevoluteJoint, usePrismaticJoint } from '@react-three/rapier'
 import useGame from './stores/useGame.jsx'
 
 export default function Player() {
@@ -26,7 +26,7 @@ export default function Player() {
         const hit = rapierWorld.castRay(ray, 10, true)
 
         if (hit.toi < 0.15) {
-            body.current.applyImpulse({ x: 0, y: 500, z: 0 })
+            body.current.applyImpulse({ x: 0, y: 200, z: 0 }, true)
         }
     }
 
@@ -39,6 +39,7 @@ export default function Player() {
     const shoulder = useRef()
     const arm = useRef()
 
+
     const jointShoulder = useRevoluteJoint(arm, shoulder, [
         // Position of the joint in arm's local space
         [-0.01, 0.25, 0],
@@ -48,29 +49,27 @@ export default function Player() {
         // the rigid-bodies it is attached to. Cannot be [0,0,0].
         [1, 0, 0]
     ])
-    // const jointB = useRevoluteJoint(racquet, arm, [
-    //     // Position of the joint in racquet's local space
-    //     [-0.5, 0, 0],
-    //     // Position of the joint in arm's local space
-    //     [0, -0.4, 0],
-    //     // Axis of the joint, expressed in the local-space of
-    //     // the rigid-bodies it is attached to. Cannot be [0,0,0].
-    //     [0, 1, 0]
-    // ])
 
 
     useFrame((state, delta) => {
         /**
          * Controls
          */
-        const { forward, backward, leftward, rightward, forehand, topspin } = getKeys()
+        const { forward, backward, leftward, rightward, forehand, topspin, chop } = getKeys()
 
         const impulse = { x: 0, y: 0, z: 0 }
         const torque = { x: 0, y: 0, z: 0 }
 
-        const impulseStrength = 600 * delta
-        const torqueStrength = 200 * delta
-
+        const impulseStrength = (chop ? 200 : 300) * delta
+        const torqueStrength = (chop ? 200 : 300) * delta
+        if (chop) {
+            const breakImpulse = body.current.linvel()
+            body.current.applyImpulse({
+                x: -breakImpulse.x * 500 * delta,
+                y: -breakImpulse.y * 500 * delta,
+                z: -breakImpulse.z * 500 * delta,
+            }, true)
+        }
         if (forward) {
             impulse.z -= impulseStrength
             torque.x -= torqueStrength
@@ -91,8 +90,8 @@ export default function Player() {
             torque.z += torqueStrength
         }
 
-        body.current.applyImpulse(impulse)
-        body.current.applyTorqueImpulse(torque)
+        body.current.applyImpulse(impulse, true)
+        body.current.applyTorqueImpulse(torque, true)
 
         /**
          * Camera
@@ -128,15 +127,16 @@ export default function Player() {
 
 
         if (forehand) {
-
-            arm.current.applyImpulse({ x: 0, y: 0, z: 10 })
+            arm.current.applyImpulse({ x: 0, y: 0, z: 20 }, true)
         }
         if (topspin) {
-            arm.current.applyImpulse({ x: 0, y: 0, z: -5 })
-
-            // arm.current.setLinvel({ x: 0, y: 0, z: 0 })
-            // arm.current.setAngvel({ x: 0, y: 0, z: 0 })
-            // arm.current.applyImpulse({ x: 0, y: 0, z: -10 })
+            arm.current.applyImpulse({ x: 0, y: 0, z: -5 }, true)
+            const sdp = shoulder.current.translation()
+            shoulder.current.setNextKinematicTranslation({
+                x: sdp.x,
+                y: sdp.y,
+                z: sdp.z - 0.01
+            })
         }
         /**
         * Phases
@@ -197,13 +197,13 @@ export default function Player() {
         <RigidBody
             type='kinematicPosition'
             ref={shoulder}
-            restitution={0.7}
+            restitution={2}
             friction={1}
             linearDamping={0.5}
             angularDamping={0.5}
             density={997}
         >
-            <mesh >
+            {/* <mesh >
                 <boxGeometry args={[0.1, 0.4, 0.1]} />
                 <meshBasicMaterial flatShading color="yellow" />
             </mesh>
@@ -212,13 +212,20 @@ export default function Player() {
             >
                 <boxGeometry args={[0.5, 0.1, 0.5]} />
                 <meshBasicMaterial flatShading color="yellow" />
+            </mesh> */}
+            <mesh
+                rotation={[0.05, -0.03, 0]}
+                position={[0.5, -0.55, -0.3]}
+            >
+                <boxGeometry args={[1, 1, 0.1]} />
+                <MeshDiscardMaterial />
             </mesh>
         </RigidBody>
         <RigidBody
             ref={arm}
             position={[0.5, 0.1, -baselineZ]}
             restitution={1}
-            friction={1}
+            friction={10}
             linearDamping={0.5}
             angularDamping={0.5}
             density={997}
@@ -227,7 +234,7 @@ export default function Player() {
                 <boxGeometry args={[0.1, 0.5, 0.1]} />
                 <meshBasicMaterial flatShading color="cyan" />
             </mesh>
-            <mesh
+            {/* <mesh
                 position={[0, -0.4, -0.2]}
                 rotation={[1, 0, 0]}
             >
@@ -240,7 +247,7 @@ export default function Player() {
             >
                 <boxGeometry args={[0.75, 0.25, 0.04]} />
                 <meshBasicMaterial flatShading color="#b4b4b4" />
-            </mesh>
+            </mesh> */}
         </RigidBody>
     </>
 }
