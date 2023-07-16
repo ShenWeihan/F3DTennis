@@ -165,7 +165,6 @@ export default function Ball({ props, magnus = true }) {
             linearDamping={linearDamping}
             angularDamping={angularDamping}
             density={mass / (4 / 3 * Math.PI * Math.pow(diameter / 2, 3))}
-        // massProperties={[mass, { x: 0, y: 0, z: 0 },]}
         >
             <BallCollider args={[diameter / 2]} />
             <group {...props} dispose={null}
