@@ -17,6 +17,51 @@ export default function Player() {
     const armRRef = useRef()
     const armLRef = useRef()
     const headRef = useRef()
+    /**
+     * Joints
+     */
+    const jointTorsoRef = useRevoluteJoint(hipRef, torsoRef, [
+        [0, 0.1, 0],
+        [0, -0.1, 0],
+        [0, 1, 0]
+    ])
+
+    // Right Shoulder Front Rotation
+    const jointRightSFRRef = useRevoluteJoint(torsoRef, shldrRARef, [
+        [0.4, 0.2, 0],
+        [0, 0, 0],
+        [1, 0, 0]
+    ])
+    // Right Shoulder Lateral Rotation
+    const jointRightSLRRef = useRevoluteJoint(shldrRARef, shldrRBRef, [
+        [0, 0, 0.001],
+        [0, 0, -0.001],
+        [0, 0, 1]
+    ])
+    // Right Shoulder Internal Rotation
+    const jointRightSIRRef = useRevoluteJoint(shldrRBRef, armRRef, [
+        [0, -0.1, 0],
+        [0, 0.5, 0],
+        [0, 1, 0]
+    ])
+    // Left Shoulder Front Rotation
+    const jointLeftSFRRef = useRevoluteJoint(torsoRef, shldrLARef, [
+        [-0.4, 0.2, 0],
+        [0, 0, 0],
+        [1, 0, 0]
+    ])
+    // Left Shoulder Lateral Rotation
+    const jointLeftSLRRef = useRevoluteJoint(shldrLARef, shldrLBRef, [
+        [0, 0, 0.001],
+        [0, 0, -0.001],
+        [0, 0, 1]
+    ])
+    // Left Shoulder Internal Rotation
+    const jointLeftSIRRef = useRevoluteJoint(shldrLBRef, armLRef, [
+        [0, -0.1, 0],
+        [0, 0.5, 0],
+        [0, 1, 0]
+    ])
 
     const [subscribeKeys, getKeys] = useKeyboardControls()
     const { rapier, world } = useRapier()
@@ -46,6 +91,7 @@ export default function Player() {
         legsRef.current.setLinvel({ x: 0, y: 0, z: 0 })
         legsRef.current.setAngvel({ x: 0, y: 0, z: 0 })
     }
+
     useEffect(() => {
         const unsubscribeReset = useGame.subscribe(
             (state) => state.phase,
@@ -65,8 +111,9 @@ export default function Player() {
         const unsubscribeDrag = subscribeKeys(
             (state) => state.topspin && state.forward,
             (value) => {
-                if (value)
-                    console.log('Dragging')
+                if (value) {
+                    // console.log('Dragging')
+                }
             }
         )
 
@@ -83,66 +130,19 @@ export default function Player() {
         }
     }, [])
 
-    const jointTorsoRef = useRevoluteJoint(hipRef, torsoRef, [
-        // Position of the joint in hip's local space
-        [0, 0.1, 0],
-        // Position of the joint in torso's local space
-        [0, -0.1, 0],
-        // Axis of the joint, expressed in the local-space of
-        // the rigid-bodies it is attached to. Cannot be [0,0,0].
-        [0, 1, 0]
-    ])
-
-    // Right Shoulder Lateral Rotation
-    const jointRightSLRRef = useRevoluteJoint(torsoRef, shldrRARef, [
-        [0.4, 0.2, 0],
-        [0, 0, 0],
-        [1, 0, 0]
-    ])
-    // Right Shoulder Front Rotation
-    const jointRightSFRRef = useRevoluteJoint(shldrRARef, shldrRBRef, [
-        [0, 0, 0],
-        [0, 0, 0],
-        [1, 0, 0]
-    ])
-    // Right Shoulder Internal Rotation
-    const jointRightSIRRef = useRevoluteJoint(shldrRBRef, armRRef, [
-        // Position of the joint in shldrRBRef's local space
-        [0, 0, 0],
-        // Position of the joint in armRRef's local space
-        [0, 0.6, 0],
-        [0, 1, 0]
-    ])
-    // Left Shoulder Lateral Rotation
-    const jointLeftSLRRef = useRevoluteJoint(torsoRef, shldrLARef, [
-        [-0.4, 0.2, 0],
-        [0, 0, 0],
-        [1, 0, 0]
-    ])
-    // Left Shoulder Front Rotation
-    const jointLeftSFRRef = useRevoluteJoint(shldrLARef, shldrLBRef, [
-        [0, 0, 0],
-        [0, 0, 0],
-        [1, 0, 0]
-    ])
-    // Left Shoulder Internal Rotation
-    const jointLeftSIRRef = useRevoluteJoint(shldrLBRef, armLRef, [
-        // Position of the joint in shldrRBRef's local space
-        [0, 0, 0],
-        // Position of the joint in armRRef's local space
-        [0, 0.6, 0],
-        [0, 1, 0]
-    ])
-
     useFrame((state, delta) => {
-
+        const { forward,
+            backward,
+            leftward,
+            rightward,
+            forehand,
+            backhand,
+            topspin,
+            slice,
+            chop } = getKeys()
         /**
-         * Controls
-        */
-        const { forward, backward, leftward, rightward, forehand, topspin, chop } = getKeys()
-
-
-        // Legs
+         * Legs
+         */
         if (legsRef.current) {
             const impulse = { x: 0, y: 0, z: 0 }
             const torque = { x: 0, y: 0, z: 0 }
@@ -179,7 +179,6 @@ export default function Player() {
             legsRef.current.applyImpulse(impulse, true)
             legsRef.current.applyTorqueImpulse(torque, true)
         }
-
         /**
          * Hip
          */
@@ -197,29 +196,74 @@ export default function Player() {
         if (torsoRef.current) torsoRef.current.wakeUp() // keep torso awake
         if (jointTorsoRef.current) {
             if (forehand) {
-                jointTorsoRef.current.configureMotorPosition(-Math.PI / 4, 100, 10)
-                jointRightSFRRef.current.configureMotorPosition(Math.PI / 2, 100, 1)
+                jointTorsoRef.current.configureMotorPosition(-Math.PI / 4, 250, 10)
+
+                if (slice) {
+                    jointTorsoRef.current.configureMotorPosition(-Math.PI / 10, 250, 10)
+                }
             }
             else if (topspin) {
-                jointTorsoRef.current.configureMotorPosition(Math.PI / 10, 100, 10)
-                jointRightSIRRef.current.configureMotorVelocity(10, 1)
+                jointTorsoRef.current.configureMotorPosition(Math.PI / 10, 250, 10)
+            }
+            else if (backhand) {
+                jointTorsoRef.current.configureMotorPosition(Math.PI / 3, 250, 10)
+                if (topspin) {
+                    jointTorsoRef.current.configureMotorPosition(Math.PI / 4, 250, 10)
+                }
+                if (slice) {
+                    jointTorsoRef.current.configureMotorPosition(Math.PI / 6, 250, 10)
+                }
             }
             else {
                 jointTorsoRef.current.configureMotorPosition(0, 100, 10)
             }
         }
+
         /**
-         * Arms
+         * Right Arm
          */
-        if (jointRightSIRRef.current) {
-            jointRightSFRRef.current.configureMotorPosition(0, 1000000, 1000)
-            jointRightSLRRef.current.configureMotorPosition(0, 1000000, 1000)
-            jointRightSIRRef.current.configureMotorPosition(0, 10000, 1000)
+        if (jointRightSFRRef.current) {
+            if (forehand) {
+                jointRightSLRRef.current.configureMotorPosition(Math.PI / 8, 1e5, 1e3)
+                if (slice) {
+                }
+            }
+            else if (topspin) {
+                jointRightSFRRef.current.configureMotorPosition(Math.PI / 5, 1e5, 1e3)
+            }
+            else if (backhand) {
+                if (topspin) {
+                }
+                if (slice) {
+                }
+            }
+            else {
+                jointRightSFRRef.current.configureMotorPosition(0, 1e5, 1e3)
+                jointRightSLRRef.current.configureMotorPosition(0, 1e5, 1e3)
+                jointRightSIRRef.current.configureMotorPosition(0, 1e5, 1e3)
+            }
         }
-        if (jointLeftSIRRef.current) {
-            jointLeftSLRRef.current.configureMotorPosition(0, 1000000, 1000)
-            jointLeftSFRRef.current.configureMotorPosition(0, 1000000, 1000)
-            jointLeftSIRRef.current.configureMotorPosition(0, 10000, 1000)
+        /**
+         * Left Arm
+         */
+        if (jointLeftSFRRef.current) {
+            if (forehand) {
+                jointLeftSFRRef.current.configureMotorPosition(Math.PI / 4, 1e10, 1e8)
+                if (topspin) {
+                }
+                if (slice) {
+                }
+            }
+            else if (backhand) {
+                if (topspin) {
+                }
+                if (slice) {
+                }
+            }
+            else {
+                jointLeftSFRRef.current.configureMotorPosition(0, 1e5, 1e3)
+                jointLeftSLRRef.current.configureMotorPosition(0, 1e5, 1e3)
+            }
         }
         /**
          * Head
@@ -339,8 +383,8 @@ export default function Player() {
             friction={0}
             linearDamping={0}
             angularDamping={0}
-            density={997}
-            position={[0, 2, 0]}
+            density={100}
+            position={[0, 1, baselineZ]}
         >
             <mesh>
                 <boxGeometry args={[0.1, 0.25, 0.1]} />
@@ -382,8 +426,8 @@ export default function Player() {
             friction={0}
             linearDamping={0}
             angularDamping={0}
-            density={997}
-            position={[0, 2, 0]}
+            density={100}
+            position={[0, 1, baselineZ]}
         >
             <mesh>
                 <boxGeometry args={[0.1, 0.25, 0.1]} />
