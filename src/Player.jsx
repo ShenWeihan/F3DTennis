@@ -17,6 +17,7 @@ export default function Player() {
     const armRRef = useRef()
     const armLRef = useRef()
     const headRef = useRef()
+    const timeoutRef = useRef()
     /**
      * Joints
      */
@@ -196,7 +197,11 @@ export default function Player() {
         if (torsoRef.current) torsoRef.current.wakeUp() // keep torso awake
         if (jointTorsoRef.current) {
             if (forehand) {
-                jointTorsoRef.current.configureMotorPosition(-Math.PI / 4, 250, 10)
+                clearTimeout(timeoutRef.current)
+                timeoutRef.current = setTimeout(() =>
+
+                    jointTorsoRef.current.configureMotorPosition(-Math.PI / 4, 250, 10), 10
+                )
 
                 if (slice) {
                     jointTorsoRef.current.configureMotorPosition(-Math.PI / 10, 250, 10)
@@ -223,13 +228,26 @@ export default function Player() {
          * Right Arm
          */
         if (jointRightSFRRef.current) {
+            const armRPosition = armRRef.current.translation()
             if (forehand) {
-                jointRightSLRRef.current.configureMotorPosition(Math.PI / 8, 1e5, 1e3)
+                // jointRightSLRRef.current.configureMotorPosition(Math.PI / 8, 1e5, 1e3)
+                armRRef.current.applyImpulseAtPoint(
+                    { x: 5 * delta, y: 20 * delta, z: 10 * delta },
+                    armRPosition, true)
+                if (topspin) {
+                    // jointRightSFRRef.current.configureMotorPosition(Math.PI / 5, 1e5, 1e3)
+                    armRRef.current.applyImpulseAtPoint(
+                        { x: 0 * delta, y: 0 * delta, z: 0 * delta },
+                        armRPosition, true)
+                }
                 if (slice) {
                 }
             }
             else if (topspin) {
-                jointRightSFRRef.current.configureMotorPosition(Math.PI / 5, 1e5, 1e3)
+                // jointRightSFRRef.current.configureMotorPosition(Math.PI / 5, 1e5, 1e3)
+                armRRef.current.applyImpulseAtPoint(
+                    { x: 0 * delta, y: 10 * delta, z: 0 * delta },
+                    armRPosition, true)
             }
             else if (backhand) {
                 if (topspin) {
@@ -248,7 +266,8 @@ export default function Player() {
          */
         if (jointLeftSFRRef.current) {
             if (forehand) {
-                jointLeftSFRRef.current.configureMotorPosition(Math.PI / 4, 1e10, 1e8)
+                armLRef.current.applyImpulseAtPoint({ x: 10 * delta, y: 25 * delta, z: -5 * delta },
+                    armLRef.current.translation(), true)
                 if (topspin) {
                 }
                 if (slice) {
@@ -263,6 +282,7 @@ export default function Player() {
             else {
                 jointLeftSFRRef.current.configureMotorPosition(0, 1e5, 1e3)
                 jointLeftSLRRef.current.configureMotorPosition(0, 1e5, 1e3)
+                jointLeftSIRRef.current.configureMotorPosition(0, 1e5, 1e3)
             }
         }
         /**
