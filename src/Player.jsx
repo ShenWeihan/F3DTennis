@@ -154,8 +154,8 @@ export default function Player() {
       const impulse = { x: 0, y: 0, z: 0 };
       const torque = { x: 0, y: 0, z: 0 };
 
-      const impulseStrength = (chop ? 200 * 5 : 300 * 5) * delta;
-      const torqueStrength = (chop ? 200 * 5 : 300 * 5) * delta;
+      const impulseStrength = (chop ? 200 : 400) * delta;
+      const torqueStrength = (chop ? 200 : 400) * delta;
       if (chop) {
         const breakImpulse = legsRef.current.linvel();
         legsRef.current.applyImpulse(
@@ -493,10 +493,15 @@ export default function Player() {
       </RigidBody>
       <Wall
         refMesh={legsRef}
-        args={[5, 1.4, 0.05]}
+        args={[2, 1, 0.01]}
         offset={[0, 1, -1]}
-        position={[0, 1, baselineZ]}
-        density={0.1}
+        position={[0, 1, baselineZ - 1]}
+        restitution={0.7}
+        density={1000}
+        ccd
+        onContactForce={(force) => {
+          console.log(force.totalForce, force);
+        }}
       />
     </>
   );
