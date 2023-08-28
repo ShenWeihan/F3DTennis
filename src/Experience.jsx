@@ -13,7 +13,7 @@ export default function Experience() {
     const blocksSeed = useGame(state => state.blocksSeed)
 
     return <>
-        <Perf position='top-left' />
+        <Perf position='bottom-left' />
         <color args={['#252731']} attach="background" />
         <Suspense>
             <Physics debug >

@@ -5,6 +5,20 @@ import Experience from "./Experience.jsx";
 import { KeyboardControls, Loader } from "@react-three/drei";
 import { Leva } from "leva";
 // import Interface from './Interface.jsx'
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import extension from '@theatre/r3f/dist/extension'
+import { SheetProvider } from '@theatre/r3f'
+
+
+// our Theatre.js project sheet, we'll use this later
+const forehandSheet = getProject('F3DTennis').sheet('Forehand')
+// Vite
+if (import.meta.env.DEV) {
+  studio.initialize()
+  studio.extend(extension)
+}
+
 
 const root = ReactDOM.createRoot(document.querySelector("#root"));
 
@@ -35,7 +49,9 @@ root.render(
         position: [2.5, 4, 6],
       }}
     >
-      <Experience />
+      <SheetProvider sheet={forehandSheet}>
+        <Experience />
+      </SheetProvider >
     </Canvas>
     <Loader />
     {/* <Interface /> */}
