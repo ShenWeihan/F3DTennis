@@ -50,7 +50,7 @@ root.render(
       }}
     >
       <SheetProvider sheet={forehandSheet}>
-        <Experience />
+        <Experience sequence={forehandSheet.sequence} />
       </SheetProvider >
     </Canvas>
     <Loader />

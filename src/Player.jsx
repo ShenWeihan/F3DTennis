@@ -12,7 +12,7 @@ import useGame from "./stores/useGame.jsx";
 import { Wall } from "./Wall";
 import { Sophie } from "./Sophie.jsx";
 
-export default function Player() {
+export default function Player({ sequence, showRapier }) {
     const legsRef = useRef();
     const hipRef = useRef();
     const torsoRef = useRef();
@@ -25,6 +25,12 @@ export default function Player() {
     const armLRef = useRef();
     const headRef = useRef();
     const timeoutRef = useRef();
+    const modelRef = useRef()
+
+
+    const [eular] = useState(() => new THREE.Euler())
+    const [quaternion] = useState(() => new THREE.Quaternion())
+
     /**
      * Joints
      */
@@ -155,7 +161,7 @@ export default function Player() {
             const impulse = { x: 0, y: 0, z: 0 };
             const torque = { x: 0, y: 0, z: 0 };
 
-            const impulseStrength = (chop ? 200 : 400) * delta;
+            const impulseStrength = (chop ? 400 : 800) * delta;
             const torqueStrength = (chop ? 200 : 400) * delta;
             if (chop) {
                 const breakImpulse = legsRef.current.linvel();
@@ -188,8 +194,25 @@ export default function Player() {
             }
 
             legsRef.current.applyImpulse(impulse, true);
-            legsRef.current.applyTorqueImpulse(torque, true);
+            // legsRef.current.applyTorqueImpulse(torque, true);
         }
+
+        /**
+         * Model
+         */
+        const modelPosition = legsRef.current.translation();
+        const modelQuaternion = legsRef.current.rotation()
+        quaternion.set(modelQuaternion.x, modelQuaternion.y, modelQuaternion.z, modelQuaternion.w)
+        eular.setFromQuaternion(quaternion)
+        if (modelRef.current) {
+            modelRef.current.position.set(
+                modelPosition.x,
+                0,
+                modelPosition.z)
+            const animationPosition = Math.abs(eular.x % (Math.PI) / (Math.PI))
+            sequence.position = animationPosition
+        }
+
         /**
          * Hip
          */
@@ -348,11 +371,11 @@ export default function Player() {
                 density={300}
             >
                 <mesh castShadow>
-                    <icosahedronGeometry args={[0.4, 1]} />
-                    <meshStandardMaterial flatShading color="mediumpurple" />
+                    <icosahedronGeometry args={[0.45, 1]} />
+                    {showRapier ? <meshStandardMaterial flatShading color="mediumpurple" /> : <MeshDiscardMaterial />}
                 </mesh>
             </RigidBody>
-            <RigidBody
+            {/* <RigidBody
                 ref={hipRef}
                 type="kinematicPosition"
                 restitution={0}
@@ -363,7 +386,7 @@ export default function Player() {
             >
                 <mesh>
                     <boxGeometry args={[0.5, 0.1, 0.5]} />
-                    <meshBasicMaterial color="lightgray" />
+                    {showRapier ? <meshBasicMaterial color="lightgray" /> : <MeshDiscardMaterial />}
                 </mesh>
             </RigidBody>
             <RigidBody
@@ -377,11 +400,11 @@ export default function Player() {
             >
                 <mesh>
                     <boxGeometry args={[0.3, 0.2, 0.3]} />
-                    <meshBasicMaterial color="lightgray" />
+                    {showRapier ? <meshBasicMaterial color="lightgray" /> : <MeshDiscardMaterial />}
                 </mesh>
                 <mesh position={[0, 0.2, 0]}>
                     <boxGeometry args={[0.6, 0.2, 0.3]} />
-                    <meshBasicMaterial color="lightgray" />
+                    {showRapier ? <meshBasicMaterial color="lightgray" /> : <MeshDiscardMaterial />}
                 </mesh>
             </RigidBody>
             <RigidBody
@@ -395,7 +418,7 @@ export default function Player() {
             >
                 <mesh>
                     <sphereGeometry args={[0.08, 10, 10, 0, -Math.PI, 0, Math.PI]} />
-                    <meshBasicMaterial color="gray" />
+                    {showRapier ? <meshBasicMaterial color="gray" /> : <MeshDiscardMaterial />}
                 </mesh>
             </RigidBody>
             <RigidBody
@@ -409,7 +432,7 @@ export default function Player() {
             >
                 <mesh>
                     <sphereGeometry args={[0.08, 10, 10, 0, Math.PI, 0, Math.PI]} />
-                    <meshBasicMaterial color="gray" />
+                    {showRapier ? <meshBasicMaterial color="gray" /> : <MeshDiscardMaterial />}
                 </mesh>
             </RigidBody>
             <RigidBody
@@ -423,11 +446,11 @@ export default function Player() {
             >
                 <mesh>
                     <boxGeometry args={[0.1, 0.25, 0.1]} />
-                    <meshBasicMaterial color="lightgray" />
+                    {showRapier ? <meshBasicMaterial color="lightgray" /> : <MeshDiscardMaterial />}
                 </mesh>
                 <mesh position={[0, 0.4, 0]}>
                     <boxGeometry args={[0.1, 0.25, 0.1]} />
-                    <meshBasicMaterial color="lightgray" />
+                    {showRapier ? <meshBasicMaterial color="lightgray" /> : <MeshDiscardMaterial />}
                 </mesh>
             </RigidBody>
             <RigidBody
@@ -441,7 +464,7 @@ export default function Player() {
             >
                 <mesh>
                     <sphereGeometry args={[0.08, 10, 10, 0, -Math.PI, 0, Math.PI]} />
-                    <meshBasicMaterial color="gray" />
+                    {showRapier ? <meshBasicMaterial color="gray" /> : <MeshDiscardMaterial />}
                 </mesh>
             </RigidBody>
             <RigidBody
@@ -455,7 +478,7 @@ export default function Player() {
             >
                 <mesh>
                     <sphereGeometry args={[0.08, 10, 10, 0, Math.PI, 0, Math.PI]} />
-                    <meshBasicMaterial color="gray" />
+                    {showRapier ? <meshBasicMaterial color="gray" /> : <MeshDiscardMaterial />}
                 </mesh>
             </RigidBody>
             <RigidBody
@@ -469,11 +492,11 @@ export default function Player() {
             >
                 <mesh>
                     <boxGeometry args={[0.1, 0.25, 0.1]} />
-                    <meshBasicMaterial color="lightgray" />
+                    {showRapier ? <meshBasicMaterial color="lightgray" /> : <MeshDiscardMaterial />}
                 </mesh>
                 <mesh position={[0, 0.4, 0]}>
                     <boxGeometry args={[0.1, 0.25, 0.1]} />
-                    <meshBasicMaterial color="lightgray" />
+                    {showRapier ? <meshBasicMaterial color="lightgray" /> : <MeshDiscardMaterial />}
                 </mesh>
             </RigidBody>
             <RigidBody
@@ -489,10 +512,10 @@ export default function Player() {
             >
                 <mesh scale={[1, 1.2, 1]} castShadow>
                     <icosahedronGeometry args={[0.13, 1]} />
-                    <meshStandardMaterial flatShading color="darkgray" />
+                    {showRapier ? <meshStandardMaterial flatShading color="darkgray" /> : <MeshDiscardMaterial />}
                 </mesh>
-            </RigidBody>
-            <Wall
+            </RigidBody> */}
+            {/* <Wall
                 refMesh={legsRef}
                 args={[2, 1, 0.01]}
                 offset={[0, 1, -1]}
@@ -500,8 +523,8 @@ export default function Player() {
                 restitution={0.7}
                 density={1000}
                 ccd
-            />
-            <Sophie position={[0, 0, baselineZ]} />
+            /> */}
+            <Sophie ref={modelRef} position={[0, 0, baselineZ]} rotation={[0, Math.PI, 0]} />
         </>
     );
 }

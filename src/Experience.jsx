@@ -8,19 +8,19 @@ import Ball from './Ball.jsx'
 import { Perf } from 'r3f-perf'
 import { Suspense } from 'react'
 
-export default function Experience() {
+export default function Experience({ sequence }) {
     const blocksCount = useGame((state) => state.blocksCount)
     const blocksSeed = useGame(state => state.blocksSeed)
 
     return <>
-        <Perf position='bottom-left' />
+        <Perf position='bottom-right' />
         <color args={['#252731']} attach="background" />
         <Suspense>
             <Physics debug >
                 <Lights />
                 <Court />
                 <Ball />
-                <Player />
+                <Player sequence={sequence} />
             </Physics>
         </Suspense>
         {/* <Effects /> */}
