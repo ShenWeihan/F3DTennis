@@ -22,6 +22,7 @@
     "r3f-perf": "^7.1.2",
     "react": "18.2",
     "react-dom": "18.2",
+    "react-merge-refs": "^2.0.2",
     "three": "^0.156.0",
     "vite-plugin-glsl": "^1.1.2",
     "zustand": "4.3"

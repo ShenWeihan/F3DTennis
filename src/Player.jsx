@@ -11,6 +11,7 @@ import {
 import useGame from "./stores/useGame.jsx";
 import { Wall } from "./Wall";
 import { Sophie } from "./Sophie.jsx";
+import { quat, vec3, euler } from "@react-three/rapier";
 
 export default function Player({ sequence, showRapier }) {
     const legsRef = useRef();
@@ -27,9 +28,6 @@ export default function Player({ sequence, showRapier }) {
     const timeoutRef = useRef();
     const modelRef = useRef()
 
-
-    const [eular] = useState(() => new THREE.Euler())
-    const [quaternion] = useState(() => new THREE.Quaternion())
 
     /**
      * Joints
@@ -161,7 +159,7 @@ export default function Player({ sequence, showRapier }) {
             const impulse = { x: 0, y: 0, z: 0 };
             const torque = { x: 0, y: 0, z: 0 };
 
-            const impulseStrength = (chop ? 400 : 800) * delta;
+            const impulseStrength = (chop ? 300 : 600) * delta;
             const torqueStrength = (chop ? 200 : 400) * delta;
             if (chop) {
                 const breakImpulse = legsRef.current.linvel();
@@ -193,24 +191,29 @@ export default function Player({ sequence, showRapier }) {
                 torque.z += torqueStrength;
             }
 
-            legsRef.current.applyImpulse(impulse, true);
-            // legsRef.current.applyTorqueImpulse(torque, true);
+            // legsRef.current.applyImpulse(impulse, true);
+            legsRef.current.applyTorqueImpulse(torque, true);
         }
 
         /**
          * Model
          */
-        const modelPosition = legsRef.current.translation();
-        const modelQuaternion = legsRef.current.rotation()
-        quaternion.set(modelQuaternion.x, modelQuaternion.y, modelQuaternion.z, modelQuaternion.w)
-        eular.setFromQuaternion(quaternion)
+        const position = vec3(legsRef.current.translation());
+        const eulerRot = euler().setFromQuaternion(
+            quat(legsRef.current.rotation())
+        );
         if (modelRef.current) {
             modelRef.current.position.set(
-                modelPosition.x,
+                position.x,
                 0,
-                modelPosition.z)
-            const animationPosition = Math.abs(eular.x % (Math.PI) / (Math.PI))
-            sequence.position = animationPosition
+                position.z)
+            const animationPosition = Math.abs(eulerRot.x % (Math.PI) / (Math.PI))
+            const linvel = vec3(legsRef.current.linvel())
+            if (linvel.length() > 0.5) {
+                sequence.position = animationPosition + 1
+            } else {
+                sequence.position = animationPosition + 1
+            }
         }
 
         /**
@@ -357,6 +360,7 @@ export default function Player({ sequence, showRapier }) {
 
         if (hipPosition.y < -1) restart();
     });
+    console.log(modelRef)
 
     return (
         <>
@@ -524,7 +528,7 @@ export default function Player({ sequence, showRapier }) {
                 density={1000}
                 ccd
             /> */}
-            <Sophie ref={modelRef} position={[0, 0, baselineZ]} rotation={[0, Math.PI, 0]} />
+            <Sophie ref={modelRef} position={[0, 0, baselineZ]} rotation={[0, 1.5 * Math.PI / 2, 0]} />
         </>
     );
 }
