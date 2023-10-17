@@ -27,6 +27,7 @@ export default function Player({ sequence, showRapier }) {
   const headRef = useRef();
   const timeoutRef = useRef();
   const modelRef = useRef();
+  const radius = 0.45;
 
   /**
    * Joints
@@ -89,13 +90,15 @@ export default function Player({ sequence, showRapier }) {
 
   const jump = () => {
     const origin = legsRef.current.translation();
-    origin.y -= 0.31;
+    origin.y -= radius + 0.01;
     const direction = { x: 0, y: -1, z: 0 };
     const ray = new rapier.Ray(origin, direction);
     const hit = rapierWorld.castRay(ray, 10, true);
-
-    if (hit.toi < 0.15) {
+    if (hit.toi < 0.01) {
+      modelRef.current.splitStep.reset();
+      modelRef.current.splitStep.play();
       legsRef.current.applyImpulse({ x: 0, y: 200, z: 0 }, true);
+    } else {
     }
   };
 
@@ -356,7 +359,6 @@ export default function Player({ sequence, showRapier }) {
 
     if (hipPosition.y < -1) restart();
   });
-  console.log(modelRef);
 
   return (
     <>
@@ -371,7 +373,7 @@ export default function Player({ sequence, showRapier }) {
         density={300}
       >
         <mesh castShadow>
-          <icosahedronGeometry args={[0.45, 1]} />
+          <icosahedronGeometry args={[radius, 1]} />
           {showRapier ? (
             <meshStandardMaterial flatShading color="mediumpurple" />
           ) : (
@@ -379,6 +381,11 @@ export default function Player({ sequence, showRapier }) {
           )}
         </mesh>
       </RigidBody>
+      <Sophie
+        ref={modelRef}
+        position={[0, 0, baselineZ]}
+        rotation={[0, Math.PI / 2, 0]}
+      />
       {/* <RigidBody
                 ref={hipRef}
                 type="kinematicPosition"
@@ -528,11 +535,6 @@ export default function Player({ sequence, showRapier }) {
                 density={1000}
                 ccd
             /> */}
-      <Sophie
-        ref={modelRef}
-        position={[0, 0, baselineZ]}
-        rotation={[0, Math.PI / 2, 0]}
-      />
     </>
   );
 }
